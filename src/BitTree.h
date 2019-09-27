@@ -492,7 +492,7 @@ struct ComponentPool
 template<typename T>
 void remove_pool_element(ComponentPool<T>* pool, uint32_t entity)
 {
-	uint32_t index = to_integer(entity) & 0xFFFFF;
+	uint32_t index = entity & 0xFFFFF;
 
 	uint64_t val;
 	if (get_tree_val(&pool->tree, index, val))
@@ -519,7 +519,7 @@ void remove_pool_element(ComponentPool<T>* pool, uint32_t entity)
 template<typename T>
 bool get_pool_element(ComponentPool<T>* pool, uint32_t entity, T& value)
 {
-	uint32_t index = to_integer(entity) & 0xFFFFF;
+	uint32_t index = entity & 0xFFFFF;
 
 	uint64_t val;
 	if (get_tree_val(&pool->tree, index, val))
@@ -626,9 +626,11 @@ void join_pools(ComponentPool<A>* poolA, ComponentPool<B>* poolB, F&& function)
 					}
 				}
 				{
-					if (false){//nindices > 4) {
+					constexpr int prefetch = 0;
+					if (prefetch > 0) {
+
 						int j = 0;
-						for (j; j < nindices - 3; j++) {
+						for (j; j < nindices - prefetch; j++) {
 
 							int index = begin + indices[j];
 							int nxindex = begin + indices[j + 3];
@@ -664,14 +666,6 @@ void join_pools(ComponentPool<A>* poolA, ComponentPool<B>* poolB, F&& function)
 							function(eid, cA, cB);
 						}
 					}
-					
-					//if (nindices > 0) {
-					//	auto eid = poolA->Reverse[nodes[0]->vals[begin + indices[nindices - 1]]];
-					//	A& cA = poolA->Dense[nodes[0]->vals[begin + indices[nindices - 1]]];
-					//	B& cB = poolB->Dense[nodes[1]->vals[begin + indices[nindices - 1]]];
-					//
-					//	function(eid, cA, cB);
-					//}					
 				}
 			}
 		}
@@ -720,7 +714,7 @@ void join_pools(ComponentPool<A>* poolA, ComponentPool<B>* poolB, ComponentPool<
 				}
 				{
 					constexpr int prefetch = 0;
-					if (prefetch > 0) {//nindices > 4) {
+					if (prefetch > 0) {
 
 						int j = 0;
 						for (j; j < nindices - prefetch; j++) {
@@ -728,9 +722,9 @@ void join_pools(ComponentPool<A>* poolA, ComponentPool<B>* poolB, ComponentPool<
 							const int index = begin + indices[j];
 							const int nxindex = begin + indices[j + prefetch];							
 							
-							const int iA = nodes[0]->vals[index];
-							const int iB = nodes[1]->vals[index];
-							const int iC = nodes[2]->vals[index];
+							const auto iA = nodes[0]->vals[index];
+							const auto iB = nodes[1]->vals[index];
+							const auto iC = nodes[2]->vals[index];
 
 							auto eid = poolA->Reverse[iA];
 
@@ -740,9 +734,9 @@ void join_pools(ComponentPool<A>* poolA, ComponentPool<B>* poolB, ComponentPool<
 							
 							C& cC = poolC->Dense[iC];	
 
-							const int iAp = nodes[0]->vals[nxindex];
-							const int iBp = nodes[1]->vals[nxindex];
-							const int iCp = nodes[2]->vals[nxindex];
+							const auto iAp = nodes[0]->vals[nxindex];
+							const auto iBp = nodes[1]->vals[nxindex];
+							const auto iCp = nodes[2]->vals[nxindex];
 
 							_mm_prefetch((char*)&poolA->Reverse[iAp], 0);
 							_mm_prefetch((char*)&poolA->Dense[iAp], 0);
@@ -780,7 +774,7 @@ void join_pools(ComponentPool<A>* poolA, ComponentPool<B>* poolB, ComponentPool<
 		}
 
 #endif
-		});
+	});
 }
 
 template<typename T>
